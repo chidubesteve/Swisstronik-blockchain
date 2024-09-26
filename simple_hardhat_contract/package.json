@@ -1,0 +1,18 @@
+{
+  "name": "swisstronik_simple_contract",
+  "version": "1.0.0",
+  "description": "simple hardhat contract for swisstronik testnet",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.12"
+  },
+  "dependencies": {
+    "@swisstronik/utils": "^1.3.0"
+  }
+}
