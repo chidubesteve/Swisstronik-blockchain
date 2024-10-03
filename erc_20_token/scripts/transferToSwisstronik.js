@@ -32,11 +32,11 @@ const sendShieldedTransaction = async (signer, destination, data, value) => {
 
 async function main() {
   /**
-   * @constant - Address of the deployedAddress
+   * @constant  Address of the deployed contract
    */
   const contractAddress = "0x63605b6de24f71EfdAFB90D0De86E00A532Af61A";
   /**
-   * @constant - destination address
+   * @constant  - destination address
    */
   const addressToTransferTo = "0x16af037878a6cAce2Ea29d39A3757aC2F6F7aac1";
 
