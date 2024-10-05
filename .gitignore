@@ -5,6 +5,9 @@
 **/cache/
 **/artifacts/
 
+# PERC20 files
+**/bin/
+
 # TypeChain files
 **/typechain/
 **/typechain-types/
