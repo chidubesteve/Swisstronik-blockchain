@@ -5,7 +5,7 @@ const PRIVATE_KEY = vars.get("PRIVATE_KEY")
 module.exports = {
   defaultNetwork: "swisstronik",
   solidity:{
-    version:"0.8.179",
+    version:"0.8.19",
   settings: {
     optimizer: {
       enabled:true,
