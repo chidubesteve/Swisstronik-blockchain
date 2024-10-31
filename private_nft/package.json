@@ -1,0 +1,27 @@
+{
+  "name": "private_nft",
+  "version": "1.0.0",
+  "description": "A private ERC721 contract standard for and according to the swisstronik testnet",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chidubesteve/Swisstronik-blockchain.git"
+  },
+  "author": "Chidube Anike",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chidubesteve/Swisstronik-blockchain/issues"
+  },
+  "homepage": "https://github.com/chidubesteve/Swisstronik-blockchain#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0",
+    "@swisstronik/utils": "^1.3.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.13"
+  }
+}
