@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const { encryptDataField } = require("@swisstronik/utils");
+const fs = require("fs");
 
 /**
  * Send a shielded transaction to the swisstronik blockchain - this is an encrypted transaction that only the sender and the node can decrypt the data
@@ -30,22 +31,24 @@ const sendShieldedTransaction = async (signer, destination, data, value) => {
 };
 
 async function main() {
-  const privateNFTAddress = "0x7093ec85A2D6e08A80C184b25D9cE936067F3c21";
+  const privateNFTAddress = fs.readFileSync("contract.txt", "utf8");
+  console.log(privateNFTAddress);
 
   // get the signer(my account)
   const [signer] = await hre.ethers.getSigners();
 
   // create a contract instance
-  const privateNFTFactory = await hre.ethers.getContractFactory("privateNFT");
+  const privateNFTFactory = await hre.ethers.getContractFactory(
+    "PrivateERC721"
+  );
   const privateNFTContract = privateNFTFactory.attach(privateNFTAddress);
 
   // URI(public gateway) of the NFT from pinata
-  const tokenURI =
-    "https://ipfs.io/ipfs/QmRPvJCeSG3UxQCw7MkTwCUzQUtnSSRybhGmWzJ54jYT3Q";
+  const tokenId = 1;
 
   // Send a shielded transaction to execute a transaction in the contract
   const functionName = "mintNFT";
-  const functionArgs = [signer.address, tokenURI];
+  const functionArgs = [signer.address, tokenId];
   // Interacting with contract
   console.log("Minting NFT...");
   const txn = await sendShieldedTransaction(
@@ -62,7 +65,10 @@ async function main() {
   // It should return a TransactionResponse object
   console.log("Transaction Response: ", txn);
 
-  console.log("Yayy!!, the NFT has been minted");
+  console.log("Yayy!!, the private NFT has been minted");
+  console.log(
+    `Transaction completed successfully! ✅ Token ID: ${tokenId} minted to ${signer.address}!`
+  );
 }
 
 main().catch((error) => {

@@ -6,6 +6,8 @@
 **/cache/
 **/artifacts/
 
+**/contract.txt
+
 # PERC20 files
 **/bin/
 

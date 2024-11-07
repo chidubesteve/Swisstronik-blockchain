@@ -1,150 +1,98 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// Uncomment this line to use console.log
-import "hardhat/console.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+interface IERC721 {
 
-contract privateNFT is ERC721, ERC721URIStorage, Ownable {
-    uint256 private _nextTokenId;
+   // event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    // event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    // event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
-    constructor(address initialOwner)
-        ERC721("PrivateRapper", "pRPr")
-        Ownable(initialOwner)
-    {}
+    function balanceOf(address owner) external view returns (uint256 balance);
+    function ownerOf(uint256 tokenId) external view returns (address owner);
+    function transferFrom(address from, address to, uint256 tokenId) external;
+    function approve(address to, uint256 tokenId) external;
+    function getApproved(uint256 tokenId) external view returns (address operator);
+}
 
-    /// @dev Wraps SWTR to pRPr.
-    /// @dev Suppressing the Transfer event for privacy.
-    receive() external payable {
-        _mint(_msgSender(), msg.value);
+contract PrivateERC721 is IERC721 {
+    string public name;
+    string public symbol;
+
+    mapping(uint256 => address) private _owners;
+    mapping(address => uint256) private _balances;
+    mapping(uint256 => address) private _tokenApprovals;
+
+    constructor(string memory _name, string memory _symbol) {
+        name = _name;
+        symbol = _symbol;
     }
 
-    function mintNFT(address _to, string memory _tokenURI)
-        public
-        payable
-        onlyOwner
-    {
-        uint256 tokenId = _nextTokenId++;
-        _safeMint(_to, tokenId);
-        _setTokenURI(tokenId, _tokenURI);
-        console.log("The NFT ID %s has been minted to %s", tokenId, msg.sender);
+    function balanceOf(address owner) external view override returns (uint256) {
+        require(owner != address(0), "PrivateERC721: Non-zero Address");
+        require(msg.sender == owner, "PrivateERC721: Caller must be owner");
+        return _balances[owner];
     }
 
-    /**
-@dev function to override the owner function form Ownable contract to restrict access to only to owner of contract cann view */
-    function owner() public view override returns (address) {
-        address currentOwner = super.owner();
+    function ownerOf(uint256 tokenId) public view override returns (address) {
+        address owner = _owners[tokenId];
+        require(owner != address(0), "Token ID does not exist");
         require(
-            msg.sender == currentOwner,
-            "PrivateNFT: Not authorized to view this information"
+            msg.sender == owner || msg.sender == _tokenApprovals[tokenId],
+            "PrivateERC721: Caller must be owner or approved"
         );
-        return currentOwner;
+        return owner;
     }
 
-
-    /**
-    @dev Override ownerOf to restrict access to only the NFT owner
-*/
-    function ownerOf(uint256 _tokenId)
-        public
-        view
-        override(IERC721, ERC721)
-        returns (address)
-    {
-        // Get the actual owner of the NFT by calling the parent contract's ownerOf
-        address nftOwner = super.ownerOf(_tokenId);
-
-        // Only the owner or an approved address can query the ownership
-        require(
-            msg.sender == super.ownerOf(_tokenId),
-            "PrivateNFT: Not authorized to view this information"
-        );
-
-        return nftOwner;
-    }
-
-    /** @dev Override balanceOf to restrict access to only the NFT owner */
-    function balanceOf(address _owner)
-        public
-        view
-        override(IERC721, ERC721)
-        returns (uint256)
-    {
-        // Get the actual balance of the NFT by calling the parent contract's balanceOf
-        uint256 nftBalance = super.balanceOf(_owner);
-
-        // Restrict access: require that the caller is the owner of the NFT
-        require(
-            msg.sender == _owner,
-            "PrivateNFT: Not authorized to view this information"
-        );
-
-        return nftBalance;
-    }
-
-    /** @dev override the _update internal function to not emit transfer events  */
-    function _update(
+    function transferFrom(
+        address from,
         address to,
-        uint256 tokenId,
-        address auth
-    ) internal override(ERC721) returns (address) {
-        address from = _ownerOf(tokenId);
+        uint256 tokenId
+    ) public override {
+        address owner = _owners[tokenId];
+        require(owner != address(0), "Token ID does not exist");
+        require(
+            msg.sender == owner || msg.sender == _tokenApprovals[tokenId],
+            "PrivateERC721: Caller is not owner nor approved"
+        );
+        require(from == owner, "PrivateERC721: Transfer from incorrect owner");
+        require(to != address(0), "PrivateERC721: Transfer to the zero address");
 
-        // Perform (optional) operator check
-        if (auth != address(0)) {
-            _checkAuthorized(from, auth, tokenId);
-        }
+        // Clear previous approvals
+        _approve(address(0), tokenId);
 
-        // Execute the update
-        if (from != address(0)) {
-            // Clear approval. No need to re-authorize or emit the Approval event
-            _approve(address(0), tokenId, address(0), false);
+        _balances[from] -= 1;
+        _balances[to] += 1;
+        _owners[tokenId] = to;
+        
+        // emit Transfer(from, to, tokenId);
+    }
 
-            unchecked {
-                _balances[from] -= 1;
-            }
-        }
+    function approve(address to, uint256 tokenId) public override {
+        address owner = _owners[tokenId];
+        require(owner != address(0), "Token ID does not exist");
+        require(msg.sender == owner, "PrivateERC721: Caller is not owner");
+        require(to != owner, "PrivateERC721: Approval to current owner");
 
-        if (to != address(0)) {
-            unchecked {
-                _balances[to] += 1;
-            }
-        }
+        _approve(to, tokenId);
+           // emit Approval(ownerOf(tokenId), to, tokenId);
+    }
 
+    function getApproved(uint256 tokenId) public view override returns (address) {
+        require(_owners[tokenId] != address(0), "PrivateERC721: Token ID does not exist");
+        return _tokenApprovals[tokenId];
+    }
+
+    function _approve(address to, uint256 tokenId) internal {
+        _tokenApprovals[tokenId] = to;
+    }
+
+    function mintNFT(address to, uint256 tokenId) public {
+        require(to != address(0), "PrivateERC721: Mint to the zero address");
+        require(_owners[tokenId] == address(0), "PERC721: Token ID already exists");
+
+        _balances[to] += 1;
         _owners[tokenId] = to;
 
-        // suppress transfer events for privacy
-        // emit Transfer(from, to, tokenId);
-
-        return from;
+          // emit Transfer(address(0), to, tokenId);
     }
-
-    // The following functions are overrides required by Solidity.
-    ///@dev // Override tokenURI to make it private
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
-        if (msg.sender != ownerOf(tokenId) && msg.sender != owner())
-            revert("PrivateNFT: Not authorized to view this information");
-
-        return super.tokenURI(tokenId);
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
-    fallback() external payable {}
-
-    //
 }
